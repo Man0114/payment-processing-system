@@ -1,5 +1,8 @@
+import dotenv from 'dotenv';
 import Redis from 'ioredis';
 import logger from '../utils/logger';
+
+dotenv.config();
 
 const redis = new Redis({
   host: process.env.REDIS_HOST || 'localhost',
@@ -7,11 +10,11 @@ const redis = new Redis({
 });
 
 redis.on('connect', () => {
-  logger.info('Redis Connected ✅');
+  logger.info('Redis Connected!');
 });
 
 redis.on('error', (error) => {
-  logger.error(`Redis Connection Failed ❌ ${error}`);
+  logger.error(`Redis Connection Failed: ${error}`);
 });
 
 export default redis;

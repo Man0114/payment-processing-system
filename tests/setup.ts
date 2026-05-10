@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 
 afterAll(async () => {
-  await mongoose.disconnect();
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+  }
 });

@@ -18,15 +18,12 @@ export interface PaymentResult {
 }
 
 export class PaymentService {
-
-  // ─── Create & Process Payment ───────────────────────────────
   async createPayment(data: CreatePaymentDTO): Promise<PaymentResult> {
     const { amount, currency, idempotencyKey } = data;
 
-    // Check if payment already exists with same idempotency key
     const existingPayment = await Payment.findOne({ idempotencyKey });
     if (existingPayment) {
-      logger.info(`Payment already exists 🔁 — key: ${idempotencyKey}`);
+      logger.info(`Payment already exists - key: ${idempotencyKey}`);
       return {
         success: true,
         payment: existingPayment,
@@ -34,7 +31,6 @@ export class PaymentService {
       };
     }
 
-    // Create new payment
     const payment = await Payment.create({
       paymentId: uuidv4(),
       amount,
@@ -43,9 +39,8 @@ export class PaymentService {
       status: PaymentStatus.PENDING,
     });
 
-    logger.info(`Payment created ✅ — id: ${payment.paymentId}`);
+    logger.info(`Payment created - id: ${payment.paymentId}`);
 
-    // Process payment asynchronously
     this.processPayment(payment.paymentId);
 
     return {
@@ -55,31 +50,26 @@ export class PaymentService {
     };
   }
 
-  // ─── Process Payment with Retry ─────────────────────────────
   async processPayment(paymentId: string): Promise<void> {
     const payment = await Payment.findOne({ paymentId });
 
     if (!payment) {
-      logger.error(`Payment not found ❌ — id: ${paymentId}`);
+      logger.error(`Payment not found - id: ${paymentId}`);
       return;
     }
 
-    // Update status to PROCESSING
     await Payment.findOneAndUpdate(
       { paymentId },
       { status: PaymentStatus.PROCESSING }
     );
 
-    logger.info(`Payment processing 🔄 — id: ${paymentId}`);
+    logger.info(`Payment processing - id: ${paymentId}`);
 
     try {
       // Call gateway with retry logic
       const gatewayResponse = await exponentialBackoff(
         async () => {
-          const response = await simulateGateway(
-            payment.amount,
-            payment.currency
-          );
+          const response = await simulateGateway();
 
           // If gateway returned failure (not exception)
           if (!response.success) {
@@ -104,7 +94,7 @@ export class PaymentService {
         }
       );
 
-      logger.info(`Payment success ✅ — id: ${paymentId}`);
+      logger.info(`Payment success - id: ${paymentId}`);
 
     } catch (error: any) {
       // Update retry count
@@ -121,29 +111,26 @@ export class PaymentService {
         }
       );
 
-      logger.error(`Payment failed ❌ — id: ${paymentId} — error: ${error.message}`);
+      logger.error(`Payment failed - id: ${paymentId} - error: ${error.message}`);
     }
   }
 
-  // ─── Get Payment Status ──────────────────────────────────────
   async getPaymentStatus(paymentId: string): Promise<IPayment | null> {
     const payment = await Payment.findOne({ paymentId });
 
     if (!payment) {
-      logger.warn(`Payment not found ⚠️ — id: ${paymentId}`);
+      logger.warn(`Payment not found - id: ${paymentId}`);
       return null;
     }
 
-    logger.info(`Payment status fetched — id: ${paymentId} — status: ${payment.status}`);
+    logger.info(`Payment status fetched - id: ${paymentId} - status: ${payment.status}`);
     return payment;
   }
 
-  // ─── Get All Payments ────────────────────────────────────────
   async getAllPayments(): Promise<IPayment[]> {
     return await Payment.find().sort({ createdAt: -1 });
   }
 
-  // ─── Retry Failed Payment ────────────────────────────────────
   async retryFailedPayment(paymentId: string): Promise<PaymentResult> {
     const payment = await Payment.findOne({ paymentId });
 
@@ -165,16 +152,19 @@ export class PaymentService {
       }
     );
 
-    logger.info(`Payment retry initiated 🔁 — id: ${paymentId}`);
+    logger.info(`Payment retry initiated-id: ${paymentId}`);
 
     // Process again
     this.processPayment(paymentId);
 
     const updatedPayment = await Payment.findOne({ paymentId });
 
+    if (!updatedPayment) {
+      throw new Error('Payment not found');
+    }
     return {
       success: true,
-      payment: updatedPayment!,
+      payment: updatedPayment,
       message: 'Payment retry initiated',
     };
   }

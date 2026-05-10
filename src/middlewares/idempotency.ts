@@ -18,11 +18,10 @@ export const idempotencyMiddleware = async (
   const idempotencyKey = idempotencyKeyHeader;
 
   try {
-    // Check if key already exists in Redis
     const existingResponse = await redis.get(`idempotency:${idempotencyKey}`);
 
     if (existingResponse) {
-      logger.info(`Duplicate request detected 🔁 — key: ${idempotencyKey}`);
+      logger.info(`Duplicate request detected-key: ${idempotencyKey}`);
       res.status(200).json({
         success: true,
         duplicate: true,
@@ -31,10 +30,8 @@ export const idempotencyMiddleware = async (
       return;
     }
 
-    // Store original response after request completes
     const originalJson = res.json.bind(res);
     res.json = (body: any) => {
-      // Save response in Redis for 24 hours
       redis.setex(
         `idempotency:${idempotencyKey}`,
         86400,
@@ -43,7 +40,6 @@ export const idempotencyMiddleware = async (
       return originalJson(body);
     };
 
-    // Attach key to request for later use
     req.headers['idempotency-key'] = idempotencyKey;
     next();
 

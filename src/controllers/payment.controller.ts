@@ -4,8 +4,6 @@ import webhookService from '../services/webhook.service';
 import logger from '../utils/logger';
 
 export class PaymentController {
-
-  // ─── Create Payment ──────────────────────────────────────────
   async createPayment(req: Request, res: Response): Promise<void> {
     try {
       const { amount, currency } = req.body;
@@ -57,32 +55,22 @@ export class PaymentController {
     }
   }
 
-  // ─── Get Payment Status ──────────────────────────────────────
   async getPaymentStatus(req: Request, res: Response): Promise<void> {
     try {
       const { paymentId } = req.params;
       if (typeof paymentId !== 'string' || !paymentId) {
-        res.status(400).json({
-          success: false,
-          message: 'paymentId param is required',
-        });
+        res.status(400).json({ success: false, message: 'paymentId param is required' });
         return;
       }
 
       const payment = await paymentService.getPaymentStatus(paymentId);
 
       if (!payment) {
-        res.status(404).json({
-          success: false,
-          message: 'Payment not found',
-        });
+        res.status(404).json({ success: false, message: 'Payment not found' });
         return;
       }
 
-      res.status(200).json({
-        success: true,
-        data: payment,
-      });
+      res.status(200).json({ success: true, data: payment });
 
     } catch (error: any) {
       logger.error(`Get payment status error: ${error.message}`);
@@ -93,7 +81,6 @@ export class PaymentController {
     }
   }
 
-  // ─── Get All Payments ────────────────────────────────────────
   async getAllPayments(req: Request, res: Response): Promise<void> {
     try {
       const payments = await paymentService.getAllPayments();
@@ -113,7 +100,6 @@ export class PaymentController {
     }
   }
 
-  // ─── Retry Failed Payment ────────────────────────────────────
   async retryPayment(req: Request, res: Response): Promise<void> {
     try {
       const { paymentId } = req.params;
@@ -142,7 +128,6 @@ export class PaymentController {
     }
   }
 
-  // ─── Handle Webhook ──────────────────────────────────────────
   async handleWebhook(req: Request, res: Response): Promise<void> {
     try {
       const payload = req.body;

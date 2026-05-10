@@ -1,0 +1,1 @@
+{"version":3,"file":"concurrency.d.ts","sourceRoot":"","sources":["../../src/middlewares/concurrency.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,YAAY,EAAE,MAAM,SAAS,CAAC;AAI1D,eAAO,MAAM,qBAAqB,GAChC,KAAK,OAAO,EACZ,KAAK,QAAQ,EACb,MAAM,YAAY,KACjB,OAAO,CAAC,IAAI,CAmCd,CAAC"}

@@ -1,0 +1,3 @@
+import { Request, Response, NextFunction } from 'express';
+export declare const concurrencyMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+//# sourceMappingURL=concurrency.d.ts.map
